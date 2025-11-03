@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clipboard Hijacking Demo - Educational Purpose</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .address-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            word-break: break-all;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .address-box:hover {
+            background-color: #e9ecef;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .button.danger {
+            background-color: #dc3545;
+        }
+        .button.danger:hover {
+            background-color: #c82333;
+        }
+        .test-area {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px dashed #6c757d;
+            border-radius: 5px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Clipboard Hijacking Demo</h1>
+        
+        <div class="warning">
+            <strong>⚠️ EDUCATIONAL PURPOSE ONLY</strong><br>
+            This demo shows how malicious websites can swap cryptocurrency addresses when you copy them. 
+            Do not use this for any malicious activities.
+        </div>
+
+        <div class="info">
+            <strong>How this works:</strong> When you click "Copy", JavaScript intercepts the copy event and 
+            replaces the legitimate address with a scammer's address. This is exactly what happens on 
+            malicious cryptocurrency websites.
+        </div>
+
+        <h2>Step 1: Generate Random Addresses</h2>
+        <button class="button" onclick="generateAddresses()">Generate Random Addresses</button>
+        <button class="button danger" onclick="clearAddresses()">Clear All</button>
+
+        <div id="addressContainer"></div>
+
+        <h2>Step 2: Test the Copy-Paste</h2>
+        <div class="test-area">
+            <p><strong>Instructions:</strong></p>
+            <ol>
+                <li>Click on any address above to copy it</li>
+                <li>Paste it in the textarea below</li>
+                <li>You'll see it always pastes the same scammer address</li>
+            </ol>
+            
+            <textarea id="pasteArea" placeholder="Paste the copied address here to see the hijacking in action..."></textarea>
+            
+            <div>
+                <strong>Expected pasted address (the scammer's address):</strong><br>
+                <code id="expectedAddress">0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b</code>
+            </div>
+        </div>
+
+        <div class="info">
+            <strong>What really happened:</strong><br>
+            • You copied: <span id="copiedAddress" style="color: red;">[Random legitimate address]</span><br>
+            • But pasted: <span id="pastedAddress" style="color: red;">[Scammer's fixed address]</span><br>
+            • If this were real, your funds would go to the scammer's wallet
+        </div>
+
+        <h2>Security Recommendations</h2>
+        <ul>
+            <li>Always verify the first and last 4 characters of pasted addresses</li>
+            <li>Use wallet address books/whitelists for frequent transactions</li>
+            <li>Be cautious of websites that feel "off" or have recent domain registrations</li>
+            <li>Consider using hardware wallets for large amounts</li>
+        </ul>
+    </div>
+
+    <script>
+        // The scammer's fixed address that will replace all copied addresses
+        const scammerAddress = "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b";
+        
+        // Sample addresses that look legitimate
+        const sampleAddresses = [
+            "0x5c662a2a0e3565591369d76581d9fd0f4599356c",
+            "0x8a7b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7",
+            "0x3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4",
+            "0x9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0",
+            "0x2d3c4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
+            "0x7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8",
+            "0x1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+            "0x6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7",
+            "0x4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5",
+            "0x8f9e0d1c2b3a4f5e6d7c8b9a0f1e2d3c4b5a6f7"
+        ];
+
+        function generateRandomAddress() {
+            const chars = '0123456789abcdef';
+            let address = '0x';
+            for (let i = 0; i < 40; i++) {
+                address += chars[Math.floor(Math.random() * 16)];
+            }
+            return address;
+        }
+
+        function generateAddresses() {
+            const container = document.getElementById('addressContainer');
+            container.innerHTML = '';
+            
+            // Generate 10 random addresses
+            for (let i = 0; i < 10; i++) {
+                const address = generateRandomAddress();
+                const addressDiv = document.createElement('div');
+                addressDiv.className = 'address-box';
+                addressDiv.textContent = address;
+                addressDiv.setAttribute('data-address', address);
+                addressDiv.onclick = function() {
+                    copyAddress(this);
+                };
+                container.appendChild(addressDiv);
+            }
+        }
+
+        function clearAddresses() {
+            document.getElementById('addressContainer').innerHTML = '';
+            document.getElementById('pasteArea').value = '';
+        }
+
+        // Setup clipboard hijacking
+        document.addEventListener('copy', function(e) {
+            const selectedText = window.getSelection().toString();
+            
+            // Check if the copied text looks like an Ethereum address
+            if (selectedText.match(/^0x[a-fA-F0-9]{40}$/)) {
+                // Update the display to show what really happened
+                document.getElementById('copiedAddress').textContent = selectedText;
+                document.getElementById('pastedAddress').textContent = scammerAddress;
+                
+                // Replace the copied text with the scammer's address
+                e.clipboardData.setData('text/plain', scammerAddress);
+                e.preventDefault();
+                
+                // Update the paste area to show what would happen
+                setTimeout(() => {
+                    document.getElementById('pasteArea').value = scammerAddress;
+                }, 100);
+            }
+        });
+
+        function copyAddress(element) {
+            const textArea = document.createElement('textarea');
+            textArea.value = element.getAttribute('data-address');
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // Show visual feedback
+            element.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                element.style.backgroundColor = '';
+            }, 1000);
+        }
+
+        // Initialize with some addresses
+        window.onload = generateAddresses;
+    </script>
+</body>
+</html>
